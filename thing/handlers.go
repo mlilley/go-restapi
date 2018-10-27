@@ -149,7 +149,3 @@ func HandleDelete(repo *Repo) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 	}
 }
-
-func setJSONContentType(w http.ResponseWriter) {
-
-}
