@@ -1,25 +1,32 @@
 package main
 
-import (
-	"net/http"
-	"net/http/httptest"
-	"testing"
+// TODO
 
-	"github.com/gorilla/mux"
-)
+// func TestGetThings(t *testing.T) {
+// 	req, err := http.NewRequest("GET", "localhost:8000/things", nil)
+// 	if err != nil {
+// 		t.Fatalf("create request failed: %v", err)
+// 	}
 
-func TestGetThings(t *testing.T) {
-	is := is.New(t)
+// 	s := server{router: mux.NewRouter()}
+// 	w := httptest.NewRecorder()
+// 	s.handleGetThings()(w, req)
+// 	res := w.Result()
+// 	defer res.Body.Close()
 
-	s := server{router: mux.NewRouter()}
-	s.routes()
+// 	fmt.Printf("xx: %v", res.ContentLength)
 
-	req, err := http.NewRequest("GET", "/things", nil)
-	is.NoErr(err)
+// 	body, err := ioutil.ReadAll(res.Body)
+// 	if err != nil {
+// 		t.Fatalf("read response failed: %v", err)
+// 	}
 
-	w := httptest.NewRecorder()
-	s.ServeHTTP(w, req)
+// 	fmt.Printf("body: %q", body)
 
-	is.Equal(w.StatusCode, http.StatusOK)
+// 	fmt.Printf("Status: %v %v\n", res.StatusCode, res.Status)
+// 	if res.StatusCode != http.StatusOK {
+// 		fmt.Printf("eh?")
+// 		t.Fatalf("status code not 200: %v", res.StatusCode)
+// 	}
 
-}
+// }
