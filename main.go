@@ -8,29 +8,25 @@ import (
 	thing "github.com/mlilley/go-restapi/thing"
 )
 
-type Server struct {
-	router *mux.Router
+type App struct {
+	router    *mux.Router
+	thingRepo *thing.Repo
 }
 
-func NewServer() Server {
+func NewApp() *App {
 	thingRepo := thing.NewRepo()
-	r := mux.NewRouter()
-	s := Server{router: r}
 
-	addRoute(r, "/things", "GET", thing.HandleList(thingRepo))
-	addRoute(r, "/things", "POST", thing.HandleCreate(thingRepo))
-	addRoute(r, "/things/{id}", "GET", thing.HandleGet(thingRepo))
-	addRoute(r, "/things/{id}", "PUT", thing.HandleUpdate(thingRepo))
-	addRoute(r, "/things/{id}", "DELETE", thing.HandleDelete(thingRepo))
+	router := mux.NewRouter()
+	router.HandleFunc("/things", thing.HandleList(thingRepo)).Methods("GET")
+	router.HandleFunc("/things", thing.HandleCreate(thingRepo)).Methods("POST")
+	router.HandleFunc("/things/{id}", thing.HandleGet(thingRepo)).Methods("GET")
+	router.HandleFunc("/things/{id}", thing.HandleUpdate(thingRepo)).Methods("PUT")
+	router.HandleFunc("/things/{id}", thing.HandleDelete(thingRepo)).Methods("DELETE")
 
-	return s
-}
-
-func addRoute(r *mux.Router, path string, methods string, handler http.HandlerFunc) {
-	r.HandleFunc(path, handler).Methods(methods)
+	return &App{router: router, thingRepo: thingRepo}
 }
 
 func main() {
-	s := NewServer()
-	log.Fatal(http.ListenAndServe(":8000", s.router))
+	app := NewApp()
+	log.Fatal(http.ListenAndServe(":8000", app.router))
 }

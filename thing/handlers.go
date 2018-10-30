@@ -47,14 +47,10 @@ func HandleGet(repo *Repo) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 		params := mux.Vars(r)
-		if params == nil {
-			http.Error(w, "id required", http.StatusBadRequest)
-			return
-		}
 
 		strID, ok := params["id"]
 		if !ok {
-			http.Error(w, "id required", http.StatusBadRequest)
+			http.Error(w, "id required2", http.StatusBadRequest)
 			return
 		}
 
@@ -70,7 +66,7 @@ func HandleGet(repo *Repo) http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(*t); err != nil {
 			panic(err)
 		}
@@ -146,6 +142,6 @@ func HandleDelete(repo *Repo) http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
