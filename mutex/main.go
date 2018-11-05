@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	thing "github.com/mlilley/go-restapi/thing"
+	thing "github.com/mlilley/go-restapi/mutex/thing"
 )
 
 type App struct {

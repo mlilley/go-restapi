@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	thing "github.com/mlilley/go-restapi/thing"
+	thing "github.com/mlilley/go-restapi/channel/thing"
 )
 
 var app *App
@@ -152,8 +152,8 @@ func TestThingsDelete(t *testing.T) {
 }
 
 func initData(app *App) {
-	app.thingRepo.Create(thing.Thing{ID: 0, Val: 10})
-	app.thingRepo.Create(thing.Thing{ID: 0, Val: 20})
+	app.thingRepo.Create(&thing.Thing{ID: 0, Val: 10})
+	app.thingRepo.Create(&thing.Thing{ID: 0, Val: 20})
 }
 
 func testURL(path string) string {
