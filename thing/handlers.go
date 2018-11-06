@@ -2,6 +2,7 @@ package thing
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -9,11 +10,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func HandleList(repo *Repo) http.HandlerFunc {
+func HandleList(repo ThingRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		ts := repo.GetAll()
+		ts, err := repo.GetAll()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(ts); err != nil {
@@ -22,18 +27,22 @@ func HandleList(repo *Repo) http.HandlerFunc {
 	}
 }
 
-func HandleCreate(repo *Repo) http.HandlerFunc {
+func HandleCreate(repo ThingRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 		var t Thing
-
 		if err := json.NewDecoder(io.LimitReader(r.Body, 1048576)).Decode(&t); err != nil {
 			http.Error(w, "invalid json", http.StatusUnprocessableEntity)
 			return
 		}
 
-		tt := repo.Create(t)
+		tt, err := repo.Create(&t)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Printf("%v\n", err)
+			return
+		}
 
 		w.WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(w).Encode(*tt); err != nil {
@@ -42,7 +51,7 @@ func HandleCreate(repo *Repo) http.HandlerFunc {
 	}
 }
 
-func HandleGet(repo *Repo) http.HandlerFunc {
+func HandleGet(repo ThingRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
@@ -50,17 +59,21 @@ func HandleGet(repo *Repo) http.HandlerFunc {
 
 		strID, ok := params["id"]
 		if !ok {
-			http.Error(w, "id required2", http.StatusBadRequest)
+			http.Error(w, "id required", http.StatusBadRequest)
 			return
 		}
 
-		id, err := strconv.Atoi(strID)
+		id, err := strconv.ParseInt(strID, 10, 64)
 		if err != nil {
 			http.Error(w, "invalid id", http.StatusBadRequest)
 			return
 		}
 
-		t := repo.Get(id)
+		t, err := repo.Get(id)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		if t == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -73,7 +86,7 @@ func HandleGet(repo *Repo) http.HandlerFunc {
 	}
 }
 
-func HandleUpdate(repo *Repo) http.HandlerFunc {
+func HandleUpdate(repo ThingRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
@@ -89,20 +102,23 @@ func HandleUpdate(repo *Repo) http.HandlerFunc {
 			return
 		}
 
-		id, err := strconv.Atoi(strID)
+		id, err := strconv.ParseInt(strID, 10, 64)
 		if err != nil {
 			http.Error(w, "invalid id", http.StatusBadRequest)
 			return
 		}
 
 		var t Thing
-
 		if err := json.NewDecoder(io.LimitReader(r.Body, 1048576)).Decode(&t); err != nil {
 			http.Error(w, "invalid json", http.StatusUnprocessableEntity)
 			return
 		}
 
-		tt := repo.Update(id, t)
+		tt, err := repo.Update(id, &t)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		if tt == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -115,7 +131,7 @@ func HandleUpdate(repo *Repo) http.HandlerFunc {
 	}
 }
 
-func HandleDelete(repo *Repo) http.HandlerFunc {
+func HandleDelete(repo ThingRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
@@ -131,13 +147,18 @@ func HandleDelete(repo *Repo) http.HandlerFunc {
 			return
 		}
 
-		id, err := strconv.Atoi(strID)
+		id, err := strconv.ParseInt(strID, 10, 64)
 		if err != nil {
 			http.Error(w, "invalid id", http.StatusBadRequest)
 			return
 		}
 
-		if ok := repo.Delete(id); !ok {
+		deleted, err := repo.Delete(id)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if !deleted {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}

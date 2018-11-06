@@ -1,7 +1,7 @@
 package thing
 
-type Repo struct {
-	id         int
+type ThingChannelRepo struct {
+	id         int64
 	things     Things
 	getChan    chan *getReq
 	getAllChan chan *getAllReq
@@ -15,7 +15,7 @@ type getAllReq struct {
 }
 
 type getReq struct {
-	id  int
+	id  int64
 	res chan *Thing
 }
 
@@ -25,18 +25,20 @@ type createReq struct {
 }
 
 type updateReq struct {
-	id  int
+	id  int64
 	t   *Thing
 	res chan *Thing
 }
 
 type deleteReq struct {
-	id  int
+	id  int64
 	res chan bool
 }
 
-func NewRepo() *Repo {
-	r := Repo{
+// public
+
+func NewThingChannelRepo() *ThingChannelRepo {
+	r := ThingChannelRepo{
 		id:         0,
 		things:     Things{},
 		getChan:    make(chan *getReq),
@@ -46,7 +48,7 @@ func NewRepo() *Repo {
 		deleteChan: make(chan *deleteReq),
 	}
 
-	go func(r *Repo) {
+	go func(r *ThingChannelRepo) {
 		for {
 			select {
 			case getReq := <-r.getChan:
@@ -66,9 +68,39 @@ func NewRepo() *Repo {
 	return &r
 }
 
-// -- private versions of repo operations --
+func (r *ThingChannelRepo) Get(id int64) (*Thing, error) {
+	res := make(chan *Thing)
+	r.getChan <- &getReq{id: id, res: res}
+	return <-res, nil
+}
 
-func (r *Repo) get(id int) *Thing {
+func (r *ThingChannelRepo) GetAll() (*Things, error) {
+	res := make(chan *Things)
+	r.getAllChan <- &getAllReq{res: res}
+	return <-res, nil
+}
+
+func (r *ThingChannelRepo) Create(t *Thing) (*Thing, error) {
+	res := make(chan *Thing)
+	r.createChan <- &createReq{t: t, res: res}
+	return <-res, nil
+}
+
+func (r *ThingChannelRepo) Update(id int64, t *Thing) (*Thing, error) {
+	res := make(chan *Thing)
+	r.updateChan <- &updateReq{id: id, t: t, res: res}
+	return <-res, nil
+}
+
+func (r *ThingChannelRepo) Delete(id int64) (bool, error) {
+	res := make(chan bool)
+	r.deleteChan <- &deleteReq{id: id, res: res}
+	return <-res, nil
+}
+
+// private
+
+func (r *ThingChannelRepo) get(id int64) *Thing {
 	for i := range r.things {
 		if r.things[i].ID == id {
 			t := r.things[i]
@@ -78,20 +110,20 @@ func (r *Repo) get(id int) *Thing {
 	return nil
 }
 
-func (r *Repo) getAll() *Things {
+func (r *ThingChannelRepo) getAll() *Things {
 	thingsCopy := make(Things, len(r.things))
 	copy(thingsCopy, r.things)
 	return &thingsCopy
 }
 
-func (r *Repo) create(t *Thing) *Thing {
+func (r *ThingChannelRepo) create(t *Thing) *Thing {
 	r.id++
-	t.ID = r.id
-	r.things = append(r.things, *t)
-	return t
+	tt := Thing{ID: r.id, Val: t.Val}
+	r.things = append(r.things, tt)
+	return &tt
 }
 
-func (r *Repo) update(id int, t *Thing) *Thing {
+func (r *ThingChannelRepo) update(id int64, t *Thing) *Thing {
 	for i := range r.things {
 		if r.things[i].ID == id {
 			r.things[i].Val = t.Val
@@ -102,7 +134,7 @@ func (r *Repo) update(id int, t *Thing) *Thing {
 	return nil
 }
 
-func (r *Repo) delete(id int) bool {
+func (r *ThingChannelRepo) delete(id int64) bool {
 	for i := range r.things {
 		if r.things[i].ID == id {
 			r.things = append(r.things[:i], r.things[i+1:]...)
@@ -110,36 +142,4 @@ func (r *Repo) delete(id int) bool {
 		}
 	}
 	return false
-}
-
-// -- public repo operations --
-
-func (r *Repo) Get(id int) *Thing {
-	res := make(chan *Thing)
-	r.getChan <- &getReq{id: id, res: res}
-	return <-res
-}
-
-func (r *Repo) GetAll() *Things {
-	res := make(chan *Things)
-	r.getAllChan <- &getAllReq{res: res}
-	return <-res
-}
-
-func (r *Repo) Create(t *Thing) *Thing {
-	res := make(chan *Thing)
-	r.createChan <- &createReq{t: t, res: res}
-	return <-res
-}
-
-func (r *Repo) Update(id int, t *Thing) *Thing {
-	res := make(chan *Thing)
-	r.updateChan <- &updateReq{id: id, t: t, res: res}
-	return <-res
-}
-
-func (r *Repo) Delete(id int) bool {
-	res := make(chan bool)
-	r.deleteChan <- &deleteReq{id: id, res: res}
-	return <-res
 }

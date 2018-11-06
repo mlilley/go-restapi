@@ -5,16 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	thing "github.com/mlilley/go-restapi/mutex/thing"
+	thing "github.com/mlilley/go-restapi/thing"
 )
 
 type App struct {
 	router    *mux.Router
-	thingRepo *thing.Repo
+	thingRepo thing.ThingRepo
 }
 
 func NewApp() *App {
-	thingRepo := thing.NewRepo()
+	thingRepo, err := thing.NewThingSqlite3Repo()
+	if err != nil {
+		panic(err)
+	}
 
 	router := mux.NewRouter()
 	router.HandleFunc("/things", thing.HandleList(thingRepo)).Methods("GET")

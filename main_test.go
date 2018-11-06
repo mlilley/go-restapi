@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	thing "github.com/mlilley/go-restapi/channel/thing"
+	thing "github.com/mlilley/go-restapi/thing"
 )
 
 var app *App
@@ -22,6 +22,15 @@ func before() {
 
 func after() {
 	srv.Close()
+}
+
+func initData(app *App) {
+	app.thingRepo.Create(&thing.Thing{ID: 0, Val: 10})
+	app.thingRepo.Create(&thing.Thing{ID: 0, Val: 20})
+}
+
+func testURL(path string) string {
+	return fmt.Sprintf("%s%s", srv.URL, path)
 }
 
 func TestThingsList(t *testing.T) {
@@ -149,13 +158,4 @@ func TestThingsDelete(t *testing.T) {
 	if strings.TrimSpace(string(body)) != expected {
 		t.Fatalf("expected body: '%v', got: '%v'", expected, strings.TrimSpace(string(body)))
 	}
-}
-
-func initData(app *App) {
-	app.thingRepo.Create(&thing.Thing{ID: 0, Val: 10})
-	app.thingRepo.Create(&thing.Thing{ID: 0, Val: 20})
-}
-
-func testURL(path string) string {
-	return fmt.Sprintf("%s%s", srv.URL, path)
 }
